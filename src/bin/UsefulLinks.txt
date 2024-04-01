@@ -1,0 +1,4 @@
+///
+/// TODO Make multi-threaded or asynchronous. If attempting the latter, this may be of help:
+///      https://os.phil-opp.com/async-await/
+///
