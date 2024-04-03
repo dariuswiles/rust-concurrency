@@ -19,8 +19,7 @@ fn main() {
     println!("Starting at monotonic clock time: {:?}", time_at_start);
 
     let socket = SocketAddrV6::new(LOCAL_ADDR_IPV6, LOCAL_PORT, 0, 0);
-    let listener = TcpListener::bind(socket)
-        .expect("Failed to bind to port {LOCAL_PORT}");
+    let listener = TcpListener::bind(socket).expect("Failed to bind to port {LOCAL_PORT}");
 
     for stream in listener.incoming() {
         match stream {
@@ -32,9 +31,7 @@ fn main() {
                 handle_connection(&mut stream);
             }
             Err(e) => {
-                panic!(
-                    "Incoming connection failed with error: {e:?}",
-                );
+                panic!("Incoming connection failed with error: {e:?}",);
             }
         }
 
@@ -54,7 +51,8 @@ fn handle_connection(stream: &mut TcpStream) {
 
     loop {
         match reader.read_line(&mut line) {
-            Ok(0) => { // End of file
+            Ok(0) => {
+                // End of file
                 println!("\t>>[End of data; closing connection]");
                 return;
             }

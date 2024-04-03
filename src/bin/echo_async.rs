@@ -1,3 +1,4 @@
+use async_std::io::prelude::BufReadExt;
 /// A server that listens on a local IPv6 TCP port for incoming connections and echoes each line of
 /// input from a client back to that client. A simple client connection can be established on the
 /// the same machine by entering something like:
@@ -5,12 +6,11 @@
 ///
 /// This code uses Rust's async/.await functionality to allow multiple clients to connect and have
 /// their input echoed seemingly in parallel.
+use async_std::io::{BufReader, WriteExt};
 use async_std::net::{Ipv6Addr, SocketAddrV6, TcpListener, TcpStream};
-use async_std::io::{prelude::BufReadExt, BufReader, WriteExt, };
 use async_std::stream::StreamExt;
 use async_std::task;
 use std::time::Instant;
-
 
 const LOCAL_ADDR_IPV6: Ipv6Addr = Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1); // Represents [::1]
 const LOCAL_PORT: u16 = 8080;
@@ -55,7 +55,8 @@ async fn handle_connection(mut stream: TcpStream) {
 
     loop {
         match reader.read_line(&mut line).await {
-            Ok(0) => { // End of file
+            Ok(0) => {
+                // End of file
                 println!("\t>>[End of data; closing connection]");
                 return;
             }

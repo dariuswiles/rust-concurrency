@@ -9,8 +9,8 @@
 /// for this simple task, but required minimal changes to the code to implement.
 use std::io::{BufRead, BufReader, Write};
 use std::net::{Ipv6Addr, SocketAddrV6, TcpListener, TcpStream};
-use std::time::Instant;
-use std::thread; // NEW for threading
+use std::thread;
+use std::time::Instant; // NEW for threading
 
 const LOCAL_ADDR_IPV6: Ipv6Addr = Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1); // Represents [::1]
 const LOCAL_PORT: u16 = 8080;
@@ -20,8 +20,7 @@ fn main() {
     println!("Starting at monotonic clock time: {:?}", time_at_start);
 
     let socket = SocketAddrV6::new(LOCAL_ADDR_IPV6, LOCAL_PORT, 0, 0);
-    let listener = TcpListener::bind(socket)
-        .expect("Failed to bind to port {LOCAL_PORT}");
+    let listener = TcpListener::bind(socket).expect("Failed to bind to port {LOCAL_PORT}");
 
     for stream in listener.incoming() {
         match stream {
@@ -31,14 +30,13 @@ fn main() {
                     time_at_start.elapsed().as_millis()
                 );
 
+                #[rustfmt::skip]
                 thread::spawn(move || { // NEW for threading
                     handle_connection(&mut stream);
                 }); // NEW for threading
             }
             Err(e) => {
-                panic!(
-                    "Incoming connection failed with error: {e:?}",
-                );
+                panic!("Incoming connection failed with error: {e:?}",);
             }
         }
 
@@ -58,7 +56,8 @@ fn handle_connection(stream: &mut TcpStream) {
 
     loop {
         match reader.read_line(&mut line) {
-            Ok(0) => { // End of file
+            Ok(0) => {
+                // End of file
                 println!("\t>>[End of data; closing connection]");
                 return;
             }
