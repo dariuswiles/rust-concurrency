@@ -82,7 +82,7 @@ fn broadcast(broadcast_rx: Receiver<Message>, user_streams_tx: Arc<Mutex<Vec<Tcp
                 let mut good_senders = Vec::new();
                 let mut streams = user_streams_tx.lock().unwrap();
 
-                let response_bytes = ("Server responds: ".to_string() + &message).into_bytes();
+                let response_bytes = message.into_bytes();
 
                 for mut stream in streams.drain(..) {
                     match stream.write_all(&response_bytes) {
@@ -109,19 +109,25 @@ fn broadcast(broadcast_rx: Receiver<Message>, user_streams_tx: Arc<Mutex<Vec<Tcp
     }
 }
 
-/// Continuously receives newline-delimited input from the `stream` passed, and sends it as a
-/// `Message` to the given `sender` channel. This process is repeated until `stream` is closed or
-/// an error occurs.
+/// First asks for the user's display name, then continuously receives newline-delimited input from
+/// the `stream` passed, and sends it as a `Message` to the given `sender` channel. This process is
+/// repeated until `stream` is closed or an error occurs.
 ///
 /// # Panics
 ///
 /// Panics if an error occurs when sending to `sender` or when attempting to read data from
 /// `stream`.
-fn handle_connection(stream: TcpStream, sender: Sender<Message>) {
+fn handle_connection(mut stream: TcpStream, sender: Sender<Message>) {
+    let mut display_name = None;
+
     let peer = stream
         .peer_addr()
         .expect("Failed to query details of the remote peer");
     println!("\tIncoming connection is from: {peer:?}");
+
+    stream
+        .write_all(b"Enter your display name\n")
+        .expect("Failed to send prompt for user to enter their display name");
 
     let mut reader = BufReader::new(stream);
     let mut line = String::new();
@@ -135,9 +141,18 @@ fn handle_connection(stream: TcpStream, sender: Sender<Message>) {
             }
             Ok(n) => {
                 print!("\t>>[{n} chars] {line}"); // No need for newline as input contains one
-                sender
-                    .send(line)
-                    .expect("Failed to send incoming message to broadcaster");
+
+                if display_name.is_none() {
+                    display_name = Some((line.trim()).to_owned());
+
+                    sender
+                        .send(display_name.clone().unwrap().to_owned() + &" has entered the chat\n")
+                        .expect("Failed to send chat entry message to broadcaster");
+                } else {
+                    sender
+                        .send(display_name.clone().unwrap().to_owned() + &": " + &line)
+                        .expect("Failed to send incoming message to broadcaster");
+                }
 
                 line = String::new();
             }
