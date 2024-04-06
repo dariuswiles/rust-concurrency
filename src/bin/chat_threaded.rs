@@ -17,10 +17,7 @@ use std::time::Instant;
 const LOCAL_ADDR_IPV6: Ipv6Addr = Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1); // Represents [::1]
 const LOCAL_PORT: u16 = 8080;
 
-#[derive(Clone, Debug)]
-struct Message {
-    data: String,
-}
+type Message = String;
 
 fn main() {
     let time_at_start = Instant::now();
@@ -80,12 +77,12 @@ fn broadcast(broadcast_rx: Receiver<Message>, user_streams_tx: Arc<Mutex<Vec<Tcp
     loop {
         match broadcast_rx.recv() {
             Ok(message) => {
-                println!("\tBroadcaster received message: {}", message.data);
+                println!("\tBroadcaster received message: {}", message);
 
                 let mut good_senders = Vec::new();
                 let mut streams = user_streams_tx.lock().unwrap();
 
-                let response_bytes = ("Server responds: ".to_string() + &message.data).into_bytes();
+                let response_bytes = ("Server responds: ".to_string() + &message).into_bytes();
 
                 for mut stream in streams.drain(..) {
                     match stream.write_all(&response_bytes) {
@@ -139,7 +136,7 @@ fn handle_connection(stream: TcpStream, sender: Sender<Message>) {
             Ok(n) => {
                 print!("\t>>[{n} chars] {line}"); // No need for newline as input contains one
                 sender
-                    .send(Message { data: line })
+                    .send(line)
                     .expect("Failed to send incoming message to broadcaster");
 
                 line = String::new();
